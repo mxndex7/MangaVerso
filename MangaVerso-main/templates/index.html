@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MangaVerso - Loja de Mangás</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="MangaVerso" class="logo-img">
+      </div>
+      <nav class="nav">
+        <ul>
+          <li><a href="#home">Início</a></li>
+          <li><a href="#catalog">Mangás</a></li>
+          <li><a href="#comics">HQs</a></li>
+          <li><a href="#popular">Populares</a></li>
+          <li><a href="#recent">Recentes</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="text" placeholder="Buscar animes (Jikan) e mangás locais..." class="search-input">
+          <button class="search-btn"><i class="fas fa-search"></i></button>
+        </div>
+        <button class="cart-btn" onclick="toggleCart()">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+      <h3>Carrinho de Compras</h3>
+      <button class="close-cart" onclick="toggleCart()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="empty-cart">
+        <i class="fas fa-shopping-cart"></i>
+        <p>Seu carrinho está vazio</p>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+      </div>
+      <button class="checkout-btn" onclick="openCheckout()" disabled>
+        Finalizar Compra
+      </button>
+    </div>
+  </div>
+
+  <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+  <div class="checkout-modal" id="checkoutModal">
+    <div class="checkout-content">
+      <div class="checkout-header">
+        <h3>Finalizar Compra</h3>
+        <button class="close-checkout" onclick="closeCheckout()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="checkout-steps">
+        <div class="step active" data-step="1">
+          <span class="step-number">1</span>
+          <span class="step-title">Dados Pessoais</span>
+        </div>
+        <div class="step" data-step="2">
+          <span class="step-number">2</span>
+          <span class="step-title">Endereço</span>
+        </div>
+        <div class="step" data-step="3">
+          <span class="step-number">3</span>
+          <span class="step-title">Pagamento</span>
+        </div>
+      </div>
+
+      <div class="checkout-form">
+
+        <div class="form-step active" id="step1">
+          <h4>Dados Pessoais</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fullName">Nome Completo *</label>
+              <input type="text" id="fullName" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">E-mail *</label>
+              <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Telefone *</label>
+              <input type="tel" id="phone" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpf">CPF *</label>
+              <input type="text" id="cpf" required>
+            </div>
+            <div class="form-group">
+              <label for="birthDate">Data de Nascimento</label>
+              <input type="date" id="birthDate">
+            </div>
+          </div>
+          <button class="next-step-btn" onclick="nextStep()">Continuar</button>
+        </div>
+
+
+        <div class="form-step" id="step2">
+          <h4>Endereço de Entrega</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cep">CEP *</label>
+              <div class="cep-field">
+                <input type="text" id="cep" required>
+                <button type="button" id="cepLookupBtn" class="search-cep-btn">Buscar endereço</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="street">Rua *</label>
+              <input type="text" id="street" required>
+            </div>
+            <div class="form-group">
+              <label for="number">Número *</label>
+              <input type="text" id="number" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="complement">Complemento</label>
+              <input type="text" id="complement">
+            </div>
+            <div class="form-group">
+              <label for="neighborhood">Bairro *</label>
+              <input type="text" id="neighborhood" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">Cidade *</label>
+              <input type="text" id="city" required>
+            </div>
+            <div class="form-group">
+              <label for="state">Estado *</label>
+              <select id="state" required>
+                <option value="">Selecione</option>
+                <option value="PE">Pernambuco</option>
+                <option value="SP">São Paulo</option>
+                <option value="RJ">Rio de Janeiro</option>
+                </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="prev-step-btn" onclick="prevStep()">Voltar</button>
+            <button class="next-step-btn" onclick="nextStep()">Continuar</button>
+          </div>
+        </div>
+
+
+        <div class="form-step" id="step3">
+          <h4>Forma de Pagamento</h4>
+          <div class="payment-methods">
+            <div class="payment-method">
+              <input type="radio" id="creditCard" name="payment" value="creditCard" checked>
+              <label for="creditCard">
+                <i class="fas fa-credit-card"></i>
+                Cartão de Crédito
+              </label>
+            </div>
+            <div class="payment-method">
+              <input type="radio" id="debitCard" name="payment" value="debitCard">
+              <label for="debitCard">
+                <i class="fas fa-credit-card"></i>
+                Cartão de Débito
+              </label>
+            </div>
+            <div class="payment-method">
+              <input type="radio" id="pix" name="payment" value="pix">
+              <label for="pix">
+                <i class="fas fa-qrcode"></i>
+                PIX
+              </label>
+            </div>
+            <div class="payment-method">
+              <input type="radio" id="boleto" name="payment" value="boleto">
+              <label for="boleto">
+                <i class="fas fa-barcode"></i>
+                Boleto Bancário
+              </label>
+            </div>
+          </div>
+
+          <div class="card-details" id="cardDetails">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cardNumber">Número do Cartão *</label>
+                <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cardName">Nome no Cartão *</label>
+                <input type="text" id="cardName">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="expiryDate">Validade *</label>
+                <input type="text" id="expiryDate" placeholder="MM/AA">
+              </div>
+              <div class="form-group">
+                <label for="cvv">CVV *</label>
+                <input type="text" id="cvv" placeholder="000">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="installments">Parcelas</label>
+                <select id="installments">
+                  <option value="1">1x sem juros</option>
+                  <option value="2">2x sem juros</option>
+                  <option value="3">3x sem juros</option>
+                  <option value="4">4x com juros</option>
+                  <option value="5">5x com juros</option>
+                  <option value="6">6x com juros</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-summary">
+            <h4>Resumo do Pedido</h4>
+            <div class="summary-items" id="summaryItems"></div>
+            <div class="summary-totals">
+              <div class="summary-line">
+                <span>Subtotal:</span>
+                <span>R$ <span id="summarySubtotal">0,00</span></span>
+              </div>
+              <div class="summary-line">
+                <span>Frete:</span>
+                <span>R$ <span id="summaryShipping">15,00</span></span>
+              </div>
+              <div class="summary-line total">
+                <span>Total:</span>
+                <span>R$ <span id="summaryTotal">0,00</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="prev-step-btn" onclick="prevStep()">Voltar</button>
+            <button class="complete-order-btn" onclick="completeOrder()">
+              <i class="fas fa-lock"></i>
+              Finalizar Pedido
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-modal" id="successModal">
+    <div class="success-content">
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3>Pedido Realizado com Sucesso!</h3>
+      <p>Seu pedido #<span id="orderNumber"></span> foi confirmado.</p>
+      <p>Você receberá um e-mail com os detalhes da compra.</p>
+      <button class="success-btn" onclick="closeSuccess()">Continuar Comprando</button>
+    </div>
+  </div>
+
+  <div class="product-modal" id="productModal">
+    <div class="product-modal-content">
+      <button class="product-modal-close" onclick="closeProductModal()">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="product-modal-body">
+        <div class="product-modal-image">
+          <img id="productModalImage" src="" alt="">
+        </div>
+        <div class="product-modal-info">
+          <h3 id="productModalTitle"></h3>
+
+          <div class="product-modal-meta">
+            <span class="product-modal-genres" id="productModalGenres"></span>
+            <span class="product-modal-score" id="productModalScore"></span>
+          </div>
+
+          <div class="product-modal-details" id="productModalDetails">
+            <div class="product-modal-detail"><strong>Tipo:</strong> <span id="productModalType"></span></div>
+            <div class="product-modal-detail"><strong>Status:</strong> <span id="productModalStatus"></span></div>
+            <div class="product-modal-detail"><strong>Publicado:</strong> <span id="productModalPublished"></span></div>
+            <div class="product-modal-detail"><strong>Volumes:</strong> <span id="productModalVolumes"></span></div>
+            <div class="product-modal-detail"><strong>Capítulos:</strong> <span id="productModalChapters"></span></div>
+            <div class="product-modal-detail"><strong>Autor(es):</strong> <span id="productModalAuthors"></span></div>
+          </div>
+
+          <p class="product-modal-synopsis" id="productModalSynopsis"></p>
+          <div class="product-modal-price" id="productModalPrice"></div>
+          <div class="product-modal-actions">
+            <button class="add-to-cart-btn" id="productModalAddToCart">
+              <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+            </button>
+            <a href="#" target="_blank" id="productModalLink" class="product-modal-link">
+              Ver no MAL <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="main">
+    <section class="hero">
+      <div class="hero-carousel">
+        <div class="hero-slide active">
+          <img src="{{ url_for('static', filename='assets/b1.jpg') }}" alt="Banner 1" class="hero-image">
+        </div>
+        <div class="hero-slide">
+          <img src="{{ url_for('static', filename='assets/b.jpg') }}" alt="Banner 2" class="hero-image">
+        </div>
+      </div>
+
+      <div class="hero-indicators">
+        <span class="hero-indicator active" data-slide="0"></span>
+        <span class="hero-indicator" data-slide="1"></span>
+      </div>
+    </section>
+
+    <section class="store-section" id="store">
+      <div class="container">
+        <h2 class="section-title">Nossa Loja</h2>
+
+        <div class="store-info">
+          <div class="store-details">
+            <div class="store-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <div>
+                <h4>Localização</h4>
+                <p>Plaza Shopping. Rua Dr. João Santos Filho, 255<br>Parnamirim, Recife - PE, 52060-615</p>
+              </div>
+            </div>
+
+            <div class="store-info-item">
+              <i class="fas fa-clock"></i>
+              <div>
+                <h4>Horários</h4>
+                <p>Segunda à Sexta: 9h às 18h<br>Sábados: 9h às 16h<br>Domingos: Fechado</p>
+              </div>
+            </div>
+
+            <div class="store-info-item">
+              <i class="fas fa-phone"></i>
+              <div>
+                <h4>Contatos</h4>
+                <p>Telefone: (81) 9745-6459<br>WhatsApp: (81) 99745-6459<br>Email: xmendex30@gmail.com</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="store-carousel">
+            <div class="carousel-container">
+              <div class="carousel-slide active">
+                <img src="{{ url_for('static', filename='assets/c1.png') }}" alt="Interior da loja" class="carousel-image">
+              </div>
+              <div class="carousel-slide">
+                <img src="{{ url_for('static', filename='assets/c2.jpg') }}" alt="Estante de mangás" class="carousel-image">
+              </div>
+              <div class="carousel-slide">
+                <img src="{{ url_for('static', filename='assets/c3.jpg') }}" alt="Área de leitura" class="carousel-image">
+              </div>
+            </div>
+            <div class="carousel-controls">
+              <button class="carousel-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
+              <button class="carousel-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="carousel-indicators">
+              <span class="indicator active" data-slide="0"></span>
+              <span class="indicator" data-slide="1"></span>
+              <span class="indicator" data-slide="2"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="store-description">
+          <p>Bem-vindos ao MangaVerso! Somos uma loja especializada em mangás com mais de 10 anos de experiência no mercado. Nossa paixão por histórias japonesas nos motivou a criar um espaço onde fãs de todas as idades podem encontrar seus títulos favoritos e descobrir novas aventuras.</p>
+          <p>Oferecemos um acervo completo com os lançamentos mais recentes e clássicos atemporais, além de um ambiente acolhedor para você explorar e se inspirar. Nossa equipe é formada por verdadeiros otakus que estão sempre prontos para ajudar você a encontrar sua próxima leitura favorita!</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog" id="catalog">
+      <div class="container">
+        <h2 class="section-title">Catálogo de Mangás</h2>
+
+        <div class="filters" id="filterContainer">
+          <!-- Filtros serão gerados dinamicamente com base nos gêneros retornados pela API -->
+        </div>
+
+        <section class="search-results" id="jikanResultsSection" style="display: none;">
+          <h2 class="section-title">Resultados da Busca (Jikan)</h2>
+          <div class="manga-grid" id="jikanResultsGrid"></div>
+        </section>
+
+        <div class="manga-grid" id="catalogGrid"></div>
+
+        <div class="load-more">
+          <button class="load-more-btn">Carregar Mais Mangás</button>
+        </div>
+      </div>
+    </section>
+
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>MangaVerso</h3>
+          <p>Seu universo de mangás favoritos em um só lugar.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Links</h4>
+          <ul>
+            <li><a href="#home">Início</a></li>
+            <li><a href="#catalog">Catálogo</a></li>
+            <li><a href="#popular">Populares</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Atendimento</h4>
+          <p>Segunda à Sexta: 9h às 18h</p>
+          <p>contato@mangaverso.com</p>
+          <p>(81) 99745-6459</p>
+        </div>
+        <div class="footer-section">
+          <h4>Segurança</h4>
+          <p>Compra 100% segura</p>
+          <p>Seus dados protegidos</p>
+          <p>Entrega garantida</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 MangaVerso. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+  
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
