@@ -318,7 +318,7 @@ function renderCatalogItems(items, append = false) {
     if (initializeFilters && typeof initializeFilters.updateFilterButtons === 'function') {
         initializeFilters.updateFilterButtons();
     }
-}
+
 
 
 // Funcao de Carrinho

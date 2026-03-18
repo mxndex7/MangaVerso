@@ -19,6 +19,25 @@ FEATURED_TITLES = [
     'Blue Lock',
 ]
 
+
+featured_cache = {}
+
+
+def preload_featured_titles():
+    """Pré-carrega os dados dos títulos destacados para evitar chamadas HTTP no runtime."""
+    global featured_cache
+    for title in FEATURED_TITLES:
+        try:
+            item = find_manga_by_title(title)
+            if item and item.get('mal_id'):
+                featured_cache[item['mal_id']] = item
+        except Exception:
+            pass  
+
+
+
+preload_featured_titles()
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -59,8 +78,7 @@ def api_jikan_manga():
 def api_jikan_manga_top():
     """Retorna os mangás mais populares (top) da API Jikan.
 
-    Inclui um conjunto de itens “favoritos” no topo (Dragon Ball Z, Naruto, Demon Slayer,
-    Attack on Titan, Gachiakuta, Blue Lock) quando a página inicial for solicitada.
+    Inclui um conjunto de itens "favoritos" no topo quando a página inicial for solicitada.
     """
     try:
         limit = int(request.args.get('limit', 16))
@@ -79,18 +97,16 @@ def api_jikan_manga_top():
         featured_items = []
         seen_ids = {item.get('mal_id') for item in results if item.get('mal_id')}
 
-        for title in FEATURED_TITLES:
-            try:
-                item = find_manga_by_title(title)
-            except Exception:
-                item = None
-
-            if item and item.get('mal_id') and item.get('mal_id') not in seen_ids:
+        for mal_id, item in featured_cache.items():
+            if mal_id not in seen_ids:
                 featured_items.append(item)
-                seen_ids.add(item.get('mal_id'))
+                seen_ids.add(mal_id)
 
         if featured_items:
             results = featured_items + results
+
+        # Limita o total a 12 itens para a primeira página
+        results = results[:12]
 
     return jsonify({'data': results})
 
