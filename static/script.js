@@ -7,7 +7,6 @@ let catalogPage = 1;
 const catalogPageSize = 12;
 let isCatalogLoading = false;
 
-// Cache de itens exibidos no catálogo (por mal_id) para facilitar o detalhe do produto
 const catalogCache = new Map();
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -29,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function initializeMangaCards() {
-    // Delegação de eventos: funciona para cards já renderizados e para novos resultados de busca do Jikan.
     document.addEventListener('click', function(event) {
         // Botão de adicionar ao carrinho
         const button = event.target.closest('.add-to-cart-btn');
@@ -235,14 +233,17 @@ async function loadCatalogPage(page = 1) {
         const response = await fetch(`/api/jikan/manga/top?limit=${catalogPageSize}&page=${page}`);
         if (!response.ok) {
             console.error('Falha ao carregar catálogo', response.status);
+            showNotification('Não foi possível carregar o catálogo de mangás. Tente novamente em alguns instantes.', 'error');
             return;
         }
 
         const json = await response.json();
         const items = Array.isArray(json.data) ? json.data : [];
         if (items.length === 0) {
+            console.warn('Nenhum item retornado do catálogo');
             const loadMoreBtn = document.querySelector('.load-more-btn');
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            grid.innerHTML = '<p class="empty-message">Nenhum mangá encontrado no momento. Tente novamente mais tarde.</p>';
             return;
         }
 
@@ -252,6 +253,8 @@ async function loadCatalogPage(page = 1) {
         if (loadMoreBtn) loadMoreBtn.style.display = items.length < catalogPageSize ? 'none' : 'block';
     } catch (error) {
         console.error('Erro ao carregar catálogo:', error);
+        showNotification('Erro de conexão ao carregar o catálogo.', 'error');
+        grid.innerHTML = '<p class="empty-message">Erro ao carregar catálogo. Verifique sua conexão.</p>';
     } finally {
         isCatalogLoading = false;
     }
@@ -309,17 +312,6 @@ function renderCatalogItems(items, append = false) {
     }
 }
 
-    if (append) {
-        grid.insertAdjacentHTML('beforeend', html);
-    } else {
-        grid.innerHTML = html;
-    }
-
-    if (initializeFilters && typeof initializeFilters.updateFilterButtons === 'function') {
-        initializeFilters.updateFilterButtons();
-    }
-
-
 
 // Funcao de Carrinho
 function addToCart(id, title, price, image) {
@@ -334,7 +326,7 @@ function addToCart(id, title, price, image) {
             id: id,
             title: title,
             price: finalPrice,
-            image: image, // Já vem o caminho completo do url_for
+            image: image, 
             quantity: 1
         });
     }
@@ -505,6 +497,8 @@ function validateCurrentStep() {
     // Validações específicas de cada etapa
     if (currentStep === 1) {
         const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
         const cpf = document.getElementById('cpf').value.trim();
 
         if (!/^[A-Za-zÀ-ÿ\s]+$/.test(fullName)) {
@@ -513,9 +507,20 @@ function validateCurrentStep() {
             return false;
         }
 
-        const cpfDigits = cpf.replace(/\D/g, '');
-        if (cpfDigits.length !== 11) {
-            showNotification('O CPF deve conter 11 dígitos numéricos.', 'error');
+        if (!isValidEmail(email)) {
+            showNotification('E-mail inválido. Deve conter @ e domínio válido.', 'error');
+            document.getElementById('email').focus();
+            return false;
+        }
+
+        if (!isValidPhone(phone)) {
+            showNotification('Telefone inválido. Use 10 ou 11 dígitos (DDD + número).', 'error');
+            document.getElementById('phone').focus();
+            return false;
+        }
+
+        if (!isValidCpf(cpf)) {
+            showNotification('CPF inválido. Verifique os 11 dígitos.', 'error');
             document.getElementById('cpf').focus();
             return false;
         }
@@ -523,12 +528,15 @@ function validateCurrentStep() {
 
     if (currentStep === 2) {
         const cep = document.getElementById('cep').value.trim();
-        const cepDigits = cep.replace(/\D/g, '');
-        if (cepDigits.length !== 8) {
+        if (!isValidCep(cep)) {
             showNotification('Informe um CEP válido (8 dígitos).', 'error');
             document.getElementById('cep').focus();
             return false;
         }
+    }
+
+    if (currentStep === 3 && !validatePayment()) {
+        return false;
     }
 
     return true;
@@ -582,9 +590,15 @@ function updateOrderSummary() {
 }
 
 function completeOrder() {
-    if (!validatePayment()) return;
+    const prevStep = currentStep;
+    currentStep = 3;
+    if (!validateCurrentStep()) {
+        currentStep = prevStep;
+        return;
+    }
+    currentStep = prevStep;
 
-    orderNumber = 'MV-' + Math.floor(Math.random() * 900000 + 100000); 
+    orderNumber = 'MV-' + Math.floor(Math.random() * 900000 + 100000);
 
     cart = [];
     localStorage.removeItem('cart'); // Limpa completamente
@@ -599,13 +613,39 @@ function validatePayment() {
     const paymentType = document.querySelector('input[name="payment"]:checked').value;
     
     if (paymentType === 'creditCard' || paymentType === 'debitCard') {
-        const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-        const cardName = document.getElementById('cardName').value;
-        const expiryDate = document.getElementById('expiryDate').value;
-        const cvv = document.getElementById('cvv').value;
+        const cardNumberRaw = document.getElementById('cardNumber').value.replace(/\D/g, '');
+        const cardName = document.getElementById('cardName').value.trim();
+        const expiryDate = document.getElementById('expiryDate').value.trim();
+        const cvv = document.getElementById('cvv').value.replace(/\D/g, '');
 
-        if (cardNumber.length < 16 || !cardName.trim() || !expiryDate.trim() || cvv.length < 3) {
-            showNotification('Por favor, preencha todos os detalhes do cartão.', 'error');
+        if (!/^[0-9]{16}$/.test(cardNumberRaw)) {
+            showNotification('Número do cartão inválido. Deve ter 16 dígitos.', 'error');
+            document.getElementById('cardNumber').focus();
+            return false;
+        }
+
+        if (!cardName) {
+            showNotification('Nome no cartão é obrigatório.', 'error');
+            document.getElementById('cardName').focus();
+            return false;
+        }
+
+        if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+            showNotification('Validade do cartão inválida. Use formato MM/AA.', 'error');
+            document.getElementById('expiryDate').focus();
+            return false;
+        }
+
+        const [month, year] = expiryDate.split('/').map(Number);
+        if (month < 1 || month > 12) {
+            showNotification('Mês de validade inválido.', 'error');
+            document.getElementById('expiryDate').focus();
+            return false;
+        }
+
+        if (!/^[0-9]{3,4}$/.test(cvv)) {
+            showNotification('CVV inválido. Use 3 ou 4 dígitos.', 'error');
+            document.getElementById('cvv').focus();
             return false;
         }
     }
@@ -962,6 +1002,41 @@ function formatExpiryDate(input) {
         value = value.replace(/(\d{2})(\d)/, '$1/$2');
     }
     input.value = value;
+}
+
+function isValidEmail(email) {
+    const trimmed = email.trim();
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(trimmed);
+}
+
+function isValidPhone(phone) {
+    const digits = phone.replace(/\D/g, '');
+    return /^(?:\d{10}|\d{11})$/.test(digits);
+}
+
+function isValidCpf(cpf) {
+    const digits = cpf.replace(/\D/g, '');
+    if (!/^\d{11}$/.test(digits)) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+
+    const calcCheckDigit = (baseDigits) => {
+        let multiplier = baseDigits.length + 1;
+        const sum = baseDigits.split('').reduce((acc, digit) => acc + Number(digit) * multiplier--, 0);
+        const result = 11 - (sum % 11);
+        return result >= 10 ? 0 : result;
+    };
+
+    const firstNine = digits.slice(0, 9);
+    const firstCheck = calcCheckDigit(firstNine);
+    const secondCheck = calcCheckDigit(firstNine + firstCheck);
+
+    return Number(digits[9]) === firstCheck && Number(digits[10]) === secondCheck;
+}
+
+function isValidCep(cep) {
+    const digits = cep.replace(/\D/g, '');
+    return /^\d{8}$/.test(digits);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

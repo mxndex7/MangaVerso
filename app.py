@@ -55,7 +55,18 @@ def adicionar():
     if not nome or preco is None:
         return jsonify({'status': 'erro', 'msg': 'Dados incompletos: nome e preco são obrigatórios.'}), 400
 
-    return jsonify({'status': 'ok', 'msg': f"{nome} adicionado ao carrinho!"})
+    try:
+        preco_float = float(preco)
+        if preco_float <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({'status': 'erro', 'msg': 'Preço inválido.'}), 400
+
+    nome_str = str(nome).strip()
+    if not nome_str:
+        return jsonify({'status': 'erro', 'msg': 'Nome do produto inválido.'}), 400
+
+    return jsonify({'status': 'ok', 'msg': f"{nome_str} adicionado ao carrinho!"})
 
 
 @app.route('/api/jikan/manga', methods=['GET'])
@@ -92,7 +103,6 @@ def api_jikan_manga_top():
 
     results = top_manga(limit=limit, page=page)
 
-    # Adiciona títulos "destacados" ao topo da primeira página
     if page == 1:
         featured_items = []
         seen_ids = {item.get('mal_id') for item in results if item.get('mal_id')}
@@ -155,4 +165,4 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=int(os.getenv('PORT', 5000)),
         debug=os.getenv('FLASK_DEBUG', '1') in ('1', 'true', 'True'),
-    )
+    ) 
