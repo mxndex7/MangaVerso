@@ -24,6 +24,22 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCepLookup();
     initializeSmoothScroll();
     initializeCatalog(); // Carrega catálogo usando Jikan
+
+    // Formatação de inputs ao digitar
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) cpfInput.addEventListener('input', function() { formatCPF(this); });
+
+    const cepInput = document.getElementById('cep');
+    if (cepInput) cepInput.addEventListener('input', function() { formatCEP(this); });
+
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) phoneInput.addEventListener('input', function() { formatPhone(this); });
+
+    const cardNumberInput = document.getElementById('cardNumber');
+    if (cardNumberInput) cardNumberInput.addEventListener('input', function() { formatCardNumber(this); });
+
+    const expiryInput = document.getElementById('expiryDate');
+    if (expiryInput) expiryInput.addEventListener('input', function() { formatExpiryDate(this); });
 });
 
 
@@ -1038,20 +1054,3 @@ function isValidCep(cep) {
     const digits = cep.replace(/\D/g, '');
     return /^\d{8}$/.test(digits);
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const cpfInput = document.getElementById('cpf');
-    if (cpfInput) cpfInput.addEventListener('input', function() { formatCPF(this); });
-
-    const cepInput = document.getElementById('cep');
-    if (cepInput) cepInput.addEventListener('input', function() { formatCEP(this); });
-
-    const phoneInput = document.getElementById('phone');
-    if (phoneInput) phoneInput.addEventListener('input', function() { formatPhone(this); });
-
-    const cardNumberInput = document.getElementById('cardNumber');
-    if (cardNumberInput) cardNumberInput.addEventListener('input', function() { formatCardNumber(this); });
-
-    const expiryInput = document.getElementById('expiryDate');
-    if (expiryInput) expiryInput.addEventListener('input', function() { formatExpiryDate(this); });
-});

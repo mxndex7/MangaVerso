@@ -43,40 +43,6 @@ def _process_item(item):
     }
 
 
-def _format_date(date_str):
-    """Formata uma string de data para YYYY-MM-DD."""
-    if not date_str:
-        return None
-    return date_str[:10]
-
-
-def _process_item(item):
-    """Processa um item da API Jikan para um dicionário padronizado."""
-    genres = [g.get("name") for g in item.get("genres", []) if g.get("name")]
-    authors = [a.get("name") for a in item.get("authors", []) if a.get("name")]
-    published = item.get("published") or {}
-    published_from = published.get("from")
-    published_to = published.get("to")
-
-    return {
-        "mal_id": item.get("mal_id"),
-        "title": item.get("title"),
-        "type": item.get("type"),
-        "status": item.get("status"),
-        "genres": genres,
-        "authors": authors,
-        "published_from": _format_date(published_from),
-        "published_to": _format_date(published_to),
-        "episodes": item.get("episodes"),
-        "volumes": item.get("volumes"),
-        "chapters": item.get("chapters"),
-        "score": item.get("score"),
-        "synopsis": item.get("synopsis"),
-        "image_url": item.get("images", {}).get("jpg", {}).get("image_url"),
-        "url": item.get("url"),
-    }
-
-
 def _search_jikan(endpoint: str, query: str, limit: int = 10):
     """Busca na API Jikan para o endpoint especificado (anime ou manga)."""
 
