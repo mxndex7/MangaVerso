@@ -9,6 +9,7 @@ import { UI } from './ui.js';
 class Cart {
   constructor() {
     this.items = this.loadFromStorage();
+    this.cleanInvalidItems(); // Limpar itens inválidos ao inicializar
   }
 
   /**
@@ -17,7 +18,17 @@ class Cart {
    */
   loadFromStorage() {
     try {
-      return JSON.parse(localStorage.getItem('cart')) || [];
+      const items = JSON.parse(localStorage.getItem('cart')) || [];
+      // Filtrar itens inválidos
+      return items.filter(item => 
+        item && 
+        typeof item.id === 'number' && 
+        item.title && 
+        typeof item.price === 'number' && 
+        item.price > 0 &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0
+      );
     } catch {
       return [];
     }
@@ -39,6 +50,12 @@ class Cart {
    * @returns {Object} Item adicionado
    */
   addItem(id, title, price, image) {
+    const numericPrice = parseFloat(price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      console.error('Preço inválido:', price);
+      return null;
+    }
+
     const existingItem = this.items.find(item => item.id === id);
 
     if (existingItem) {
@@ -47,7 +64,7 @@ class Cart {
       this.items.push({
         id,
         title,
-        price: parseFloat(price),
+        price: numericPrice,
         image,
         quantity: 1
       });
@@ -90,6 +107,22 @@ class Cart {
   clear() {
     this.items = [];
     localStorage.removeItem('cart');
+  }
+
+  /**
+   * Remove itens inválidos do carrinho
+   */
+  cleanInvalidItems() {
+    this.items = this.items.filter(item => 
+      item && 
+      typeof item.id === 'number' && 
+      item.title && 
+      typeof item.price === 'number' && 
+      item.price > 0 &&
+      typeof item.quantity === 'number' &&
+      item.quantity > 0
+    );
+    this.saveToStorage();
   }
 
   /**

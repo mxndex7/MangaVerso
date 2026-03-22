@@ -45,14 +45,24 @@ class Catalog {
     }
 
     try {
-      const items = await API.getTopManga(this.pageSize, page);
+      let items = [];
+
+      if (page === 1) {
+        // Carregar featured e top para primeira página
+        const [featured, top] = await Promise.all([
+          API.getFeaturedManga(),
+          API.getTopManga(this.pageSize - 3, page)  // Reservar espaço para 3 featured
+        ]);
+        items = [...featured, ...top];
+      } else {
+        items = await API.getTopManga(this.pageSize, page);
+      }
 
       if (items.length === 0) {
         const loadMoreBtn = document.querySelector('.load-more-btn');
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         if (page === 1) {
-          grid.innerHTML =
-            '<p class="empty-message">Nenhum mangá encontrado no momento.</p>';
+          grid.innerHTML = '<p class="empty-message">Nenhum mangá encontrado no momento.</p>';
         }
         return;
       }
@@ -67,8 +77,7 @@ class Catalog {
     } catch (error) {
       console.error('Erro ao carregar catálogo:', error);
       UI.showNotification('Erro ao carregar catálogo. Verifique sua conexão.', 'error');
-      grid.innerHTML =
-        '<p class="empty-message">Erro ao carregar catálogo.</p>';
+      grid.innerHTML = '<p class="empty-message">Erro ao carregar catálogo.</p>';
     } finally {
       this.isLoading = false;
     }

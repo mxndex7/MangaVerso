@@ -119,7 +119,7 @@
               <input type="date" id="birthDate">
             </div>
           </div>
-          <button class="next-step-btn" onclick="nextStep()">Continuar</button>
+          <button class="next-step-btn" id="nextStepBtn">Continuar</button>
         </div>
 
 
@@ -170,8 +170,8 @@
             </div>
           </div>
           <div class="form-actions">
-            <button class="prev-step-btn" onclick="prevStep()">Voltar</button>
-            <button class="next-step-btn" onclick="nextStep()">Continuar</button>
+            <button class="prev-step-btn" id="prevStepBtn">Voltar</button>
+            <button class="next-step-btn" id="nextStepBtn2">Continuar</button>
           </div>
         </div>
 
@@ -184,27 +184,6 @@
               <label for="creditCard">
                 <i class="fas fa-credit-card"></i>
                 Cartão de Crédito
-              </label>
-            </div>
-            <div class="payment-method">
-              <input type="radio" id="debitCard" name="payment" value="debitCard">
-              <label for="debitCard">
-                <i class="fas fa-credit-card"></i>
-                Cartão de Débito
-              </label>
-            </div>
-            <div class="payment-method">
-              <input type="radio" id="pix" name="payment" value="pix">
-              <label for="pix">
-                <i class="fas fa-qrcode"></i>
-                PIX
-              </label>
-            </div>
-            <div class="payment-method">
-              <input type="radio" id="boleto" name="payment" value="boleto">
-              <label for="boleto">
-                <i class="fas fa-barcode"></i>
-                Boleto Bancário
               </label>
             </div>
           </div>
@@ -267,8 +246,8 @@
           </div>
 
           <div class="form-actions">
-            <button class="prev-step-btn" onclick="prevStep()">Voltar</button>
-            <button class="complete-order-btn" onclick="completeOrder()">
+            <button class="prev-step-btn" id="prevStepBtn2">Voltar</button>
+            <button class="complete-order-btn" id="completeOrderBtn">
               <i class="fas fa-lock"></i>
               Finalizar Pedido
             </button>
@@ -348,80 +327,9 @@
       </div>
     </section>
 
-    <section class="store-section" id="store">
-      <div class="container">
-        <h2 class="section-title">Nossa Loja</h2>
-
-        <div class="store-info">
-          <div class="store-details">
-            <div class="store-info-item">
-              <i class="fas fa-map-marker-alt"></i>
-              <div>
-                <h4>Localização</h4>
-                <p>Plaza Shopping. Rua Dr. João Santos Filho, 255<br>Parnamirim, Recife - PE, 52060-615</p>
-              </div>
-            </div>
-
-            <div class="store-info-item">
-              <i class="fas fa-clock"></i>
-              <div>
-                <h4>Horários</h4>
-                <p>Segunda à Sexta: 9h às 18h<br>Sábados: 9h às 16h<br>Domingos: Fechado</p>
-              </div>
-            </div>
-
-            <div class="store-info-item">
-              <i class="fas fa-phone"></i>
-              <div>
-                <h4>Contatos</h4>
-                <p>Telefone: (81) 9745-6459<br>WhatsApp: (81) 99745-6459<br>Email: xmendex30@gmail.com</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="store-carousel">
-            <div class="carousel-container">
-              <div class="carousel-slide active">
-                <img src="{{ url_for('static', filename='assets/c1.png') }}" alt="Interior da loja" class="carousel-image">
-              </div>
-              <div class="carousel-slide">
-                <img src="{{ url_for('static', filename='assets/c2.jpg') }}" alt="Estante de mangás" class="carousel-image">
-              </div>
-              <div class="carousel-slide">
-                <img src="{{ url_for('static', filename='assets/c3.jpg') }}" alt="Área de leitura" class="carousel-image">
-              </div>
-            </div>
-            <div class="carousel-controls">
-              <button class="carousel-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
-              <button class="carousel-btn next-btn"><i class="fas fa-chevron-right"></i></button>
-            </div>
-            <div class="carousel-indicators">
-              <span class="indicator active" data-slide="0"></span>
-              <span class="indicator" data-slide="1"></span>
-              <span class="indicator" data-slide="2"></span>
-            </div>
-          </div>
-        </div>
-
-        <div class="store-description">
-          <p>Bem-vindos ao MangaVerso! Somos uma loja especializada em mangás com mais de 10 anos de experiência no mercado. Nossa paixão por histórias japonesas nos motivou a criar um espaço onde fãs de todas as idades podem encontrar seus títulos favoritos e descobrir novas aventuras.</p>
-          <p>Oferecemos um acervo completo com os lançamentos mais recentes e clássicos atemporais, além de um ambiente acolhedor para você explorar e se inspirar. Nossa equipe é formada por verdadeiros otakus que estão sempre prontos para ajudar você a encontrar sua próxima leitura favorita!</p>
-        </div>
-      </div>
-    </section>
-
     <section class="catalog" id="catalog">
       <div class="container">
         <h2 class="section-title">Catálogo de Mangás</h2>
-
-        <div class="filters" id="filterContainer">
-          <!-- Filtros serão gerados dinamicamente com base nos gêneros retornados pela API -->
-        </div>
-
-        <section class="search-results" id="jikanResultsSection" style="display: none;">
-          <h2 class="section-title">Resultados da Busca (Jikan)</h2>
-          <div class="manga-grid" id="jikanResultsGrid"></div>
-        </section>
 
         <div class="manga-grid" id="catalogGrid"></div>
 

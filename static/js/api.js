@@ -65,6 +65,22 @@ const API = {
   },
 
   /**
+   * Carrega mangás em destaque
+   * @returns {Promise<Array>}
+   */
+  async getFeaturedManga() {
+    try {
+      const response = await fetch('/api/jikan/manga/featured');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const json = await response.json();
+      return Array.isArray(json.data) ? json.data : [];
+    } catch (error) {
+      console.error('Erro ao carregar mangás em destaque:', error);
+      return [];
+    }
+  },
+
+  /**
    * Adiciona item ao carrinho (confirmação no backend)
    * @param {string} nome - Nome do item
    * @param {number} preco - Preço do item
@@ -105,6 +121,26 @@ const API = {
       return await response.json();
     } catch (error) {
       console.error('Erro ao consultar CEP:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Submete dados de checkout para processamento
+   * @param {Object} checkoutData - Dados completos do checkout
+   * @returns {Promise<Object>}
+   */
+  async submitCheckout(checkoutData) {
+    try {
+      const response = await fetch('/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkoutData)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao finalizar compra:', error);
       throw error;
     }
   }

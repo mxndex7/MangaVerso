@@ -34,8 +34,6 @@ function initializeApp() {
   // Carregar catálogo e search
   catalog.initialize();
   setupSearch();
-  setupCarousels();
-  setupSmoothScroll();
 }
 
 /**
@@ -51,6 +49,39 @@ function setupCartDisplay() {
     if (addBtn) {
       e.preventDefault();
       handleAddToCart(addBtn);
+      return;
+    }
+
+    // Botão de diminuir quantidade
+    const minusBtn = e.target.closest('.minus-btn');
+    if (minusBtn) {
+      const id = parseInt(minusBtn.getAttribute('data-id'));
+      const item = cart.items.find(item => item.id === id);
+      if (item) {
+        cart.updateQuantity(id, item.quantity - 1);
+        updateCartDisplay();
+      }
+      return;
+    }
+
+    // Botão de aumentar quantidade
+    const plusBtn = e.target.closest('.plus-btn');
+    if (plusBtn) {
+      const id = parseInt(plusBtn.getAttribute('data-id'));
+      const item = cart.items.find(item => item.id === id);
+      if (item) {
+        cart.updateQuantity(id, item.quantity + 1);
+        updateCartDisplay();
+      }
+      return;
+    }
+
+    // Botão de remover item
+    const removeBtn = e.target.closest('.remove-item');
+    if (removeBtn) {
+      const id = parseInt(removeBtn.getAttribute('data-id'));
+      cart.removeItem(id);
+      updateCartDisplay();
       return;
     }
 
@@ -140,17 +171,18 @@ function updateCartDisplay() {
     checkoutBtn.disabled = true;
   } else {
     itemsEl.innerHTML = cart.items
+      .filter(item => item && item.id && item.title) // Filtrar itens null/inválidos
       .map(item => `
-        <div class="cart-item">
+        <div class="cart-item" data-id="${item.id}">
           <img src="${item.image}" alt="${item.title}" class="cart-item-image">
           <div class="cart-item-details">
             <div class="cart-item-title">${item.title}</div>
             <div class="cart-item-price">R$ ${Formatters.formatPrice(item.price)}</div>
             <div class="cart-item-controls">
-              <button class="quantity-btn" onclick="cart.updateQuantity(${item.id}, ${item.quantity - 1}); updateCartDisplay();">-</button>
+              <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
               <span class="quantity-display">${item.quantity}</span>
-              <button class="quantity-btn" onclick="cart.updateQuantity(${item.id}, ${item.quantity + 1}); updateCartDisplay();">+</button>
-              <button class="remove-item" onclick="cart.removeItem(${item.id}); updateCartDisplay();">
+              <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+              <button class="remove-item" data-id="${item.id}">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -228,15 +260,30 @@ function setupCheckoutForm() {
   }
 
   // Validação de etapas
-  const nextBtns = document.querySelectorAll('.next-step-btn');
-  nextBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (validateCheckoutStep(currentCheckoutStep)) {
-        currentCheckoutStep++;
-        updateCheckoutStepDisplay();
-      }
-    });
-  });
+  const nextBtn = document.getElementById('nextStepBtn');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', nextStep);
+  }
+  
+  const nextBtn2 = document.getElementById('nextStepBtn2');
+  if (nextBtn2) {
+    nextBtn2.addEventListener('click', nextStep);
+  }
+  
+  const prevBtn = document.getElementById('prevStepBtn');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', prevStep);
+  }
+  
+  const prevBtn2 = document.getElementById('prevStepBtn2');
+  if (prevBtn2) {
+    prevBtn2.addEventListener('click', prevStep);
+  }
+  
+  const completeBtn = document.getElementById('completeOrderBtn');
+  if (completeBtn) {
+    completeBtn.addEventListener('click', completeOrder);
+  }
 
   const prevBtns = document.querySelectorAll('.prev-step-btn');
   prevBtns.forEach(btn => {
@@ -309,22 +356,33 @@ function validateCheckoutStep(step) {
     const phone = document.getElementById('phone').value;
     const cpf = document.getElementById('cpf').value;
 
-    if (!Validators.isValidName(fullName)) {
-      UI.showNotification('Nome inválido.', 'error');
+    console.log('Validating step 1:', { fullName, email, phone, cpf });
+
+    if (!fullName.trim()) {
+      UI.showNotification('Nome é obrigatório.', 'error');
       return false;
     }
+    if (!email.trim()) {
+      UI.showNotification('E-mail é obrigatório.', 'error');
+      return false;
+    }
+    if (!phone.trim()) {
+      UI.showNotification('Telefone é obrigatório.', 'error');
+      return false;
+    }
+    if (!cpf.trim()) {
+      UI.showNotification('CPF é obrigatório.', 'error');
+      return false;
+    }
+
+    // Validações básicas
     if (!Validators.isValidEmail(email)) {
       UI.showNotification('E-mail inválido.', 'error');
       return false;
     }
-    if (!Validators.isValidPhone(phone)) {
-      UI.showNotification('Telefone inválido.', 'error');
-      return false;
-    }
-    if (!Validators.isValidCPF(cpf)) {
-      UI.showNotification('CPF inválido.', 'error');
-      return false;
-    }
+
+    console.log('Step 1 validation passed');
+    return true;
   }
 
   if (step === 2) {
@@ -612,3 +670,111 @@ function setupSmoothScroll() {
 // Expor para uso global (atualizar carrinho via onclick)
 window.cart = cart;
 window.updateCartDisplay = updateCartDisplay;
+
+/**
+ * Finaliza pedido
+ */
+/**
+ * Coleta todos os dados do checkout
+ * @returns {Object} Dados completos do checkout
+ */
+function getCheckoutData() {
+  return {
+    // Dados pessoais
+    fullName: document.getElementById('fullName')?.value || '',
+    email: document.getElementById('email')?.value || '',
+    phone: document.getElementById('phone')?.value || '',
+    cpf: document.getElementById('cpf')?.value || '',
+    birthDate: document.getElementById('birthDate')?.value || null,
+
+    // Endereço
+    cep: document.getElementById('cep')?.value || '',
+    street: document.getElementById('street')?.value || '',
+    number: document.getElementById('number')?.value || '',
+    neighborhood: document.getElementById('neighborhood')?.value || '',
+    city: document.getElementById('city')?.value || '',
+    state: document.getElementById('state')?.value || '',
+    complement: document.getElementById('complement')?.value || '',
+
+    // Pagamento
+    cardNumber: document.getElementById('cardNumber')?.value || '',
+    cardName: document.getElementById('cardName')?.value || '',
+    expiryDate: document.getElementById('expiryDate')?.value || '',
+    cvv: document.getElementById('cvv')?.value || '',
+    installments: parseInt(document.getElementById('installments')?.value) || 1,
+
+    // Total do carrinho
+    total: cart.getTotal()
+  };
+}
+
+function completeOrder() {
+  if (!validateCheckoutStep(currentCheckoutStep)) {
+    return;
+  }
+
+  // Coletar dados do checkout
+  const checkoutData = getCheckoutData();
+
+  // Mostrar processamento
+  UI.showNotification('Processando pedido...', 'info');
+
+  // Enviar para backend
+  API.submitCheckout(checkoutData)
+    .then(response => {
+      if (response.status === 'ok') {
+        // Limpar carrinho
+        cart.clear();
+        updateCartDisplay();
+
+        // Fechar checkout
+        closeCheckout();
+
+        // Mostrar sucesso com ID do pedido
+        UI.showSuccess(`Pedido ${response.order_id} realizado com sucesso!`);
+      } else {
+        UI.showNotification('Erro ao processar pedido: ' + response.msg, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erro no checkout:', error);
+      UI.showNotification('Erro ao processar pedido. Tente novamente.', 'error');
+    });
+}
+
+/**
+ * Avança para próxima etapa
+ */
+function nextStep() {
+  console.log('nextStep called, currentCheckoutStep:', currentCheckoutStep);
+  const isValid = validateCheckoutStep(currentCheckoutStep);
+  console.log('Validation result:', isValid);
+  if (isValid) {
+    currentCheckoutStep++;
+    console.log('Advancing to step:', currentCheckoutStep);
+    updateCheckoutStepDisplay();
+    if (currentCheckoutStep === 3) {
+      updateOrderSummary();
+    }
+  } else {
+    console.log('Validation failed, staying on step:', currentCheckoutStep);
+  }
+}
+
+/**
+ * Volta para etapa anterior
+ */
+function prevStep() {
+  currentCheckoutStep--;
+  updateCheckoutStepDisplay();
+}
+
+// Expor funções para o escopo global (necessário para onclick no HTML)
+window.nextStep = nextStep;
+window.prevStep = prevStep;
+window.addToCart = addToCart;
+window.removeFromCart = removeFromCart;
+window.updateCartQuantity = updateCartQuantity;
+window.clearCart = clearCart;
+window.checkout = checkout;
+window.completeOrder = completeOrder;

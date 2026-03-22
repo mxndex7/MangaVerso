@@ -77,7 +77,8 @@ const Formatters = {
    */
   makePriceFromScore(score) {
     const base = 19.9;
-    const extra = score ? Math.min(Math.max(score, 0), 10) * 1.5 : 0;
+    const validScore = score && !isNaN(score) ? Math.min(Math.max(score, 0), 10) : 5; // default 5 se null
+    const extra = validScore * 1.5;
     return (base + extra).toFixed(2);
   }
 };
